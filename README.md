@@ -16,12 +16,21 @@ But the code is reasonably clear, so, clone it and go your own way!
 
 Done for Hebrew and Greek.
 
-## Vocabulary
-A simple notebook to produce list of Hebrew and Aramaic lexemes
-in order of decreasing frequency.
-
 ## Trees
 Generate syntax trees from the Hebrew data.
 The notebook does all BHSA versions.
 De trees are exported in plain text in bracket notation.
 The output is in the repo.
+
+## Vocabulary
+A simple notebook to produce list of Hebrew and Aramaic lexemes
+in order of decreasing frequency.
+
+## Voyant
+If you want to put the data in a corpus form, you can use the notebook
+[prepare.ipynb](https://github.com/ETCBC/lingo/blob/master/voyant/prepare.ipynb).
+
+You can choose a text format and a granularity, and then the notebook will
+create a corpus for that in a local `_temp` directory.
+Then you can zip it and upload to text processing services such as
+[Voyant](http://voyant-tools.org).
