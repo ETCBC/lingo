@@ -1,9 +1,7 @@
 '''
-This module contains the code used to export edge relations
-for phrase(atom) heads in the ETCBC's BHSA Hebrew data.
-
-N.B. the functions here are older and are in the process of
-being simplified and expanded to cover all phrase types.
+!NB! the functions here are out of date. This file is merely
+a placeholder. The code found in the notebook getting_heads.ipynb
+will soon replace the material found here.
 '''
 
 def get_heads(phrase, diagnose=False):
