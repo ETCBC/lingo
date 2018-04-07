@@ -6,6 +6,66 @@ N.B. the functions here are older and are in the process of
 being simplified and expanded to cover all phrase types.
 '''
 
+def get_heads(phrase, diagnose=False):
+    '''
+    Returns substantive head nouns, if there are any, from a phrase node.
+    "substantive" does not include prounouns.
+    
+    Based on a supplied phrase get phrase atom and subphrase features 
+    and compare them against a group of sets.
+    Define those sets first. Then make the comparison.
+    
+    *Note*
+    Currently this function has been tested thoroughly only with phrases
+    that function as a subject or object within the clause. Theoretically
+    it should work with nearly any phrase type. But that has yet to be tested.
+    Also, the algorithm currently excludes pronouns.
+    '''
+    
+    good_sp = {'subs', 'nmpr', 'adjv'}
+    good_pdp = {'subs', 'nmpr'}
+        
+    heads = [] # nouns go here
+    phrase_words = L.d(phrase, 'word')
+        
+    for word in phrase_words:
+        
+        # get phrases's phrase atoms, subphrases, and subphrase relations
+        phrase_atom = L.u(word, 'phrase_atom')[0]
+        subphrases = L.u(word, 'subphrase') 
+        sp_relas = set(F.rela.v(sp) for sp in subphrases)
+        
+        test_good = [F.pdp.v(word) in good_pdp, # is noun
+                     F.sp.v(word) in good_sp, # is noun
+                     good_phrs_type(phrase_atom, subphrases, diagnose), # is NP or PP with את
+                     independent(phrase_atom, subphrases, heads, diagnose) 
+                    ] # is valid subphrase rela.
+        
+        # compare word/phrase features
+        if all(test_good):
+        
+            # handle quantifiers
+            quants = {'KL/', 'M<V/'}
+            if F.lex.v(word) in quants or F.ls.v(word) == 'card':
+                genitive_head = get_quantified(word, good_pdp, good_sp) # returns word node or None
+                if genitive_head:
+                    heads.append(genitive_head) # valid quantified noun found
+                else:
+                    continue # no noun found, skip it
+            else:
+                heads.append(word) # word is a head
+    
+        else:
+            if diagnose: 
+                print(T.text([word]), word)
+                print('test_good', tuple(zip(test_good, ('pdp', 'sp', 'phr_typ', 'indep.'))))
+                print('subphrases', subphrases)
+                print('phrase_atom', phrase_atom)
+                print()
+            continue
+            
+    return heads8
+
 def good_phrs_type(phrase_atom, subphrases, diagnose=False):
     '''
     Return boolean on whether a phrase atom is an acceptable type.
@@ -116,64 +176,3 @@ def independent(phrase_atom, subphrases, heads_list, diagnose=False):
         if diagnose:
             print('not an acceptable rela...')
         return False  
-        
-    
-def get_heads(phrase, diagnose=False):
-    '''
-    Returns substantive head nouns, if there are any, from a phrase node.
-    "substantive" does not include prounouns.
-    
-    Based on a supplied phrase get phrase atom and subphrase features 
-    and compare them against a group of sets.
-    Define those sets first. Then make the comparison.
-    
-    *Note*
-    Currently this function has been tested thoroughly only with phrases
-    that function as a subject or object within the clause. Theoretically
-    it should work with nearly any phrase type. But that has yet to be tested.
-    Also, the algorithm currently excludes pronouns.
-    '''
-    
-    good_sp = {'subs', 'nmpr', 'adjv'}
-    good_pdp = {'subs', 'nmpr'}
-        
-    heads = [] # nouns go here
-    phrase_words = L.d(phrase, 'word')
-        
-    for word in phrase_words:
-        
-        # get phrases's phrase atoms, subphrases, and subphrase relations
-        phrase_atom = L.u(word, 'phrase_atom')[0]
-        subphrases = L.u(word, 'subphrase') 
-        sp_relas = set(F.rela.v(sp) for sp in subphrases)
-        
-        test_good = [F.pdp.v(word) in good_pdp, # is noun
-                     F.sp.v(word) in good_sp, # is noun
-                     good_phrs_type(phrase_atom, subphrases, diagnose), # is NP or PP with את
-                     independent(phrase_atom, subphrases, heads, diagnose) 
-                    ] # is valid subphrase rela.
-        
-        # compare word/phrase features
-        if all(test_good):
-        
-            # handle quantifiers
-            quants = {'KL/', 'M<V/'}
-            if F.lex.v(word) in quants or F.ls.v(word) == 'card':
-                genitive_head = get_quantified(word, good_pdp, good_sp) # returns word node or None
-                if genitive_head:
-                    heads.append(genitive_head) # valid quantified noun found
-                else:
-                    continue # no noun found, skip it
-            else:
-                heads.append(word) # word is a head
-    
-        else:
-            if diagnose: 
-                print(T.text([word]), word)
-                print('test_good', tuple(zip(test_good, ('pdp', 'sp', 'phr_typ', 'indep.'))))
-                print('subphrases', subphrases)
-                print('phrase_atom', phrase_atom)
-                print()
-            continue
-            
-    return heads
