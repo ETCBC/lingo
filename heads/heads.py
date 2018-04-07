@@ -64,7 +64,7 @@ def get_heads(phrase, diagnose=False):
                 print()
             continue
             
-    return heads8
+    return heads
 
 def good_phrs_type(phrase_atom, subphrases, diagnose=False):
     '''
