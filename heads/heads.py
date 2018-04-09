@@ -4,6 +4,8 @@ a placeholder. The code found in the notebook getting_heads.ipynb
 will soon replace the material found here.
 '''
 
+from __main__ import F, E, T, L
+
 def get_heads(phrase, diagnose=False):
     '''
     Returns substantive head nouns, if there are any, from a phrase node.
