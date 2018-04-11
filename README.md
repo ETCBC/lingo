@@ -34,3 +34,6 @@ You can choose a text format and a granularity, and then the notebook will
 create a corpus for that in a local `_temp` directory.
 Then you can zip it and upload to text processing services such as
 [Voyant](http://voyant-tools.org).
+
+## Heads
+Export edge relationships between phrases and their head words. A head word is defined as "the word that determines the syntactic category of that phrase" [(wikipedia)](https://en.wikipedia.org/wiki/Head_(linguistics)).
