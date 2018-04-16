@@ -1,7 +1,8 @@
-import sys
-import os
+from tf.fabric import Fabric
+from tf.extra.bhsa import Bhsa
 
 from tree import Tree
+
 
 VERSION = '2017'
 
@@ -11,23 +12,23 @@ ptyp = 'phrase_type' if VERSION == '3' else 'typ'
 ctyp = 'clause_atom_type' if VERSION == '3' else 'typ'
 g_word_utf8 = 'text' if VERSION == '3' else 'g_word_utf8'
 
-LOC = ('~/github', 'etcbc/bhsa', 'test')
-sys.path.append(os.path.expanduser(f'{LOC[0]}/{LOC[1]}/programs'))
-from bhsa import Bhsa  # noqa: E402
-B = Bhsa(*LOC, version='2017')
-B.api.makeAvailableIn(globals())
-
-B.load(f'''
+TF = Fabric(locations=[
+    f'~/github/etcbc/bhsa/tf/{VERSION}',
+])
+api = TF.load(f'''
     {sp} {rela} {ptyp} {ctyp}
     {g_word_utf8}
     mother
 ''')
+api.makeAvailableIn(globals())
+
+B = Bhsa(api, 'test', version=VERSION)
 
 treeTypes = ('sentence', 'clause', 'phrase', 'subphrase', 'word')
 (rootType, leafType, clauseType) = (treeTypes[0], treeTypes[-1], 'clause')
 
 tree = Tree(
-    B.TF,
+    TF,
     otypes=treeTypes,
     clauseType=clauseType,
     ccrFeature=rela,
