@@ -1,178 +1,195 @@
 '''
-!NB! the functions here are out of date. This file is merely
-a placeholder. The code found in the notebook getting_heads.ipynb
-will soon replace the material found here.
+This module contains the code used to produce the heads.tf and 
+prep_obj.tf features. This code is a work-in-progress. Retrieving
+phrase heads requires a lot of choices about syntax and semantics. It 
+also requires an underlying data model that is reliable and fine-grained
+enough to handle complex phrase structures. The ETCBC data model is not
+fully sufficient to handle these cases. Thus, this module itself does not
+produce perfect results. Any suggestions for improvement are greatly
+appreciated.
+
+-Cody Kingham, ETCBC, 16.04.18
 '''
 
-from __main__ import F, E, T, L
+def get_heads(phrase, api):
+    '''
+    Extracts and returns the heads of a supplied
+    phrase or phrase atom based on that phrase's type
+    and the relations reflected within the phrase.
+    
+    --input--
+    phrase(atom) node number
+    
+    --output--
+    tuple of head word node(s) 
+    '''
+    
+    F, E, T, L = api.F, api.E, api.T, api.L # TF data methods
+    
+    # mapping from phrase type to good part of speech values for heads
+    head_pdps = {'VP': {'verb'},                   # verb 
+                 'NP': {'subs', 'adjv', 'nmpr'},   # noun 
+                 'PrNP': {'nmpr', 'subs'},         # proper-noun 
+                 'AdvP': {'advb', 'nmpr', 'subs'}, # adverbial 
+                 'PP': {'prep'},                   # prepositional 
+                 'CP': {'conj', 'prep'},           # conjunctive
+                 'PPrP': {'prps'},                 # personal pronoun
+                 'DPrP': {'prde'},                 # demonstrative pronoun
+                 'IPrP': {'prin'},                 # interrogative pronoun
+                 'InjP': {'intj'},                 # interjectional
+                 'NegP': {'nega'},                 # negative
+                 'InrP': {'inrg'},                 # interrogative
+                 'AdjP': {'adjv'}                  # adjective
+                } 
+    
+    # get phrase-head's part of speech value and list of candidate matches
+    phrase_type = F.typ.v(phrase)
+    head_candidates = [w for w in L.d(phrase, 'word')
+                          if F.pdp.v(w) in head_pdps[phrase_type]]
+        
+    # VP with verbs require no further processing, return the head verb
+    if phrase_type == 'VP':        
+        return tuple(head_candidates)
+        
+    # go head-hunting!
+    heads = []
+    
+    for word in head_candidates:
+        
+        # gather the word's subphrase (+ phrase_atom if otype is phrase) relations
+        word_phrases = list(L.u(word, 'subphrase'))
+        word_phrases += list(L.u(word, 'phrase_atom')) if (F.otype.v(phrase) == 'phrase') else list()
+        word_relas = set(F.rela.v(phr) for phr in word_phrases) or {'NA'}
 
-def get_heads(phrase, diagnose=False):
-    '''
-    Returns substantive head nouns, if there are any, from a phrase node.
-    "substantive" does not include prounouns.
-    
-    Based on a supplied phrase get phrase atom and subphrase features 
-    and compare them against a group of sets.
-    Define those sets first. Then make the comparison.
-    
-    *Note*
-    Currently this function has been tested thoroughly only with phrases
-    that function as a subject or object within the clause. Theoretically
-    it should work with nearly any phrase type. But that has yet to be tested.
-    Also, the algorithm currently excludes pronouns.
-    '''
-    
-    good_sp = {'subs', 'nmpr', 'adjv'}
-    good_pdp = {'subs', 'nmpr'}
-        
-    heads = [] # nouns go here
-    phrase_words = L.d(phrase, 'word')
-        
-    for word in phrase_words:
-        
-        # get phrases's phrase atoms, subphrases, and subphrase relations
-        phrase_atom = L.u(word, 'phrase_atom')[0]
-        subphrases = L.u(word, 'subphrase') 
-        sp_relas = set(F.rela.v(sp) for sp in subphrases)
-        
-        test_good = [F.pdp.v(word) in good_pdp, # is noun
-                     F.sp.v(word) in good_sp, # is noun
-                     good_phrs_type(phrase_atom, subphrases, diagnose), # is NP or PP with את
-                     independent(phrase_atom, subphrases, heads, diagnose) 
-                    ] # is valid subphrase rela.
-        
-        # compare word/phrase features
-        if all(test_good):
-        
-            # handle quantifiers
-            quants = {'KL/', 'M<V/'}
-            if F.lex.v(word) in quants or F.ls.v(word) == 'card':
-                genitive_head = get_quantified(word, good_pdp, good_sp) # returns word node or None
-                if genitive_head:
-                    heads.append(genitive_head) # valid quantified noun found
-                else:
-                    continue # no noun found, skip it
-            else:
-                heads.append(word) # word is a head
-    
-        else:
-            if diagnose: 
-                print(T.text([word]), word)
-                print('test_good', tuple(zip(test_good, ('pdp', 'sp', 'phr_typ', 'indep.'))))
-                print('subphrases', subphrases)
-                print('phrase_atom', phrase_atom)
-                print()
+        # check (sub)phrase relations for independency
+        if word_relas - {'NA', 'par', 'Para'}: 
             continue
             
-    return heads
-
-def good_phrs_type(phrase_atom, subphrases, diagnose=False):
-    '''
-    Return boolean on whether a phrase atom is an acceptable type.
-    Acceptable is either a noun phrase (NP) or
-    a prepositional phrase (PP) that is governed only by את.
-    '''
-
-    if F.typ.v(phrase_atom) == 'NP': # noun phrase
-        return True
-    
-    # for logic on this selection criteria, see [?]
-    prep_sp = sorted(sp for sp in subphrases # sorted sp with prepositions
-                         if 'prep' in set(F.pdp.v(w) for w in L.d(sp, 'word')))
-    phrase_type = prep_sp or (phrase_atom,)
-    preps = [w for w in L.d(phrase_type[0], 'word') 
-                    if F.pdp.v(w) == 'prep']
-    
-    if F.typ.v(phrase_atom) == 'PP' and preps: # check for את
-        prep = preps[0]
-        if F.lex.v(prep) == '>T':
-            return True
-        else:
-            if diagnose:
-                print('>T not found...')
-            return False
-    else:
-        if diagnose:
-            print('neither NP or PP...')
-            print('phrase_type: ', phrase_type)
-        return False
-
-def get_quantified(abs_wnode, good_pdp, good_sp, diagnose=False):
-    '''
-    Extract the genitive noun in a construct chain with a quantifier.
-    The function simply returns the first substantive in the chain.
-    '''
-    
-    rectum = E.mother.t(abs_wnode) # get rectum subphrase
-    abs_phrase = L.d(L.u(abs_wnode, 'phrase')[0], 'word') # for phrase boundary
-    
-    if not rectum:
-        if diagnose:
-            print('no rectum found at word', abs_wnode)
-        return None  # abs not in norm. construct (e.g. w/ verbs)
-    
-    # get words and nouns in the rectum subphrase
-    r_words = L.d(rectum[0], 'word')
-    r_nouns = [w for w in r_words 
-                   if F.sp.v(w) in good_sp
-                   and F.pdp.v(w) in good_pdp
-                   and w in abs_phrase]
-    if r_nouns:
-        return r_nouns[0] # return the first noun
-    else:
-        if diagnose:
-            print('no noun found for word', abs_wnode)
-        return None # no noun found, return nothing
-    
-def independent(phrase_atom, subphrases, heads_list, diagnose=False):
+        # check parallel relations for independency
+        elif word_relas & {'par', 'Para'} and mother_is_head(word_phrases, heads, api):
+            this_head = find_quantified(word, api) or find_attributed(word, api) or word
+            heads.append(this_head)
+            
+        # save all others as heads, check for quantifiers first
+        elif word_relas == {'NA'}:
+            this_head = find_quantified(word, api) or find_attributed(word, api) or word
+            heads.append(this_head)
+            
+    return tuple(sorted(set(heads)))
+            
+def mother_is_head(word_phrases, previous_heads, api):
     
     '''
-    Checks phrase and subphrase relations for dependency relations.
-    Requires a list of previously analyzed head nouns.
-    This list is required to double check parallel (coordinate) relations. 
+    Test and validate parallel relationships for independency.
+    Must gather the mother for each relation and check whether 
+    the mother contains a head word. 
+    
+    --input--
+    * list of phrase nodes for a given word (includes subphrases)
+    * list of previously approved heads
+    
+    --output--
+    boolean
     '''
-    # exclude words in phrase_atoms with these relation features
-    omit_pa_rela = {'Appo', # apposition
-                    'Spec'} # specification
     
-    # exclude words in subphrases with these relation features
-    omit_sp_rela = {'rec', # nomen rectum
-                    'adj', # adjunct 
-                    'atr', # attributive
-                    'mod', # modifier
-                    'dem'} # demontrative
+    F, E, T, L = api.F, api.E, api.T, api.L # TF data methods
     
-    parallels = {'par', 'Para'} # parallel i.e. coordination specification
-    omit_relas = omit_pa_rela | omit_sp_rela
-    phrase_units = list(subphrases) + [phrase_atom] # phrase atom & subphrase 
-    relas = set(F.rela.v(obj) for obj in phrase_units) # phrase atom & subphrase relas
-    
-    if not relas & omit_relas and not parallels & relas: # good relas
-        return True
-    
-    elif not relas & omit_relas and parallels & relas: # check parallel relations
+    # get word's enclosing phrases that are parallel
+    parallel_phrases = [ph for ph in word_phrases if F.rela.v(ph) in {'par', 'Para'}]
+    # get the mother for the parallel phrases
+    parallel_mothers = [E.mother.f(ph)[0] for ph in parallel_phrases] 
+    # get mothers' words, by mother
+    parallel_mom_words = [set(L.d(mom, 'word')) for mom in parallel_mothers]
+    # test for head in each mother
+    test_mothers = [bool(phrs_words & set(previous_heads)) for phrs_words in parallel_mom_words] 
         
-        # assemble acceptable phrase mothers from the already accepted head nouns
-        head_mothers = set(L.u(w, 'phrase_atom')[0] for w in heads_list)
-        head_mothers |= set(sp for w in heads_list
-                               for sp in L.u(w, 'subphrase'))
-        
-        for pu in phrase_units:
-            if F.rela.v(pu) in parallels:
-                mother = E.mother.f(pu)[0]
-                if mother in head_mothers:
-                    return True
-                else:
-                    if diagnose:
-                        print('False independence: ')
-                        print('phrase units', phrase_units)
-                        print('mothers', head_mothers)
-                        print('head mothers', head_mothers)
-                        print()
-                        
-                    return False
-                
-    else: # noun is not independent
-        if diagnose:
-            print('not an acceptable rela...')
-        return False  
+    return all(test_mothers)
+    
+
+def find_quantified(word, api):
+    
+    '''        
+    Check whether a head candidate is a quantifier (e.g. כל).
+    If it is, find the quantified noun if there is one.
+    Quantifiers are connected with the modified noun
+    either by a subphrase relation of "rec" for nomen 
+    regens. In this case, the quantifier word node is the
+    mother itself. In other cases, the noun is related to the
+    number via the "atr" (attributive) subphrase relation. In this
+    case, the edge relation is connected from the substantive
+    to the number's subphrase.
+    
+    --input--
+    word node
+    
+    --output--
+    new word node or None
+    '''
+    
+    F, E, T, L = api.F, api.E, api.T, api.L # TF data methods
+    
+    custom_quants = {'KL/', 'M<V/', 'JTR/', # quantifier lexemes, others?
+                     'M<FR/', 'XYJ/'} 
+    good_pdps = {'subs', # substantive
+                 'nmpr', # proper noun
+                 'prde', # demonstrative
+                 'prps', # pronoun
+                 'verb'} # "verb" for participles, see the inquiries below.
+    
+    if F.lex.v(word) not in custom_quants and F.ls.v(word) not in {'card', 'ordn'}:        
+        return None
+    
+    # first check rec relations for valid quantified noun:
+    rectum = next((sp for sp in E.mother.t(word) if F.rela.v(sp) == 'rec'), 0) # extract the rectum
+    noun = next((w for w in L.d(rectum, 'word') if F.pdp.v(w) in good_pdps), 0) # filter words for noun
+    num_check = F.ls.v(L.u(noun, 'lex')[0]) if noun else ''
+    if noun and num_check not in {'card', 'ordn'}:
+        return noun
+    
+    # check the adjunct relation if no rec found:
+    subphrases = sorted(L.u(word, 'subphrase'))    
+    # move progressively from smallest to largest subphrase, stop when non-cardinal noun is found  
+    for sp in subphrases:        
+        candidates = sorted(daughter for daughter in E.mother.t(sp) if F.rela.v(daughter) == 'adj')
+        for candi in candidates:
+            noun = next((w for w in L.d(candi, 'word') if F.pdp.v(w) in good_pdps), 0)
+            num_check = F.ls.v(L.u(noun, 'lex')[0]) if noun else ''
+            if noun and num_check not in {'card', 'ordn'}:                
+                return noun
+    
+    # all else are non-quantifiers
+    return None
+
+def find_attributed(word, api):
+    
+    '''        
+    Check whether the head candidate is an adjective.
+    If it is, retrieve its attributed noun via the
+    regens (rec) relationship.
+    
+    This function is similar to the quantified function.
+    
+    --input--
+    word node
+    
+    --output--
+    new word node or None
+    '''
+    
+    F, E, T, L = api.F, api.E, api.T, api.L # TF data methods
+    
+    if F.pdp.v(word) != 'adjv':
+        return None
+    
+    # check rec relations for valid attributed noun:
+    rectum = next((sp for sp in E.mother.t(word) if F.rela.v(sp) == 'rec'), 0) # extract the rectum
+    noun = next((w for w in L.d(rectum, 'word') if F.pdp.v(w) == 'subs'), 0) # filter words for noun
+    if noun:
+        return noun
+    
+    # sanity check: adjectives should not 
+    # pass through this algorithm without a noun assignment
+    if F.typ.v(L.u(word, 'phrase')) == 'NP':
+        raise Exception(f'adjective head assignment on NP {L.u(word, "phrase")} at word {word}')
+    else:
+        return None
