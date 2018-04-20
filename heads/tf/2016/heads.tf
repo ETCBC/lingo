@@ -5,7 +5,7 @@
 @source=see the notebook at https://github.com/etcbc/lingo/heads
 @valueType=int
 @writtenBy=Text-Fabric
-@dateWritten=2018-04-16T19:05:10Z
+@dateWritten=2018-04-20T15:38:59Z
 
 651292	1
 3
