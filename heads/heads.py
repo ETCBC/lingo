@@ -66,12 +66,19 @@ def get_heads(phrase, api):
             continue
             
         # check parallel relations for independency
-        elif word_relas & {'par', 'Para'} and mother_is_head(word_phrases, heads, api):
+        elif all([word_relas & {'par', 'Para'},
+                  mother_is_head(word_phrases, heads, api),
+                  check_preposition(word, phrase, api)
+                 ]):
+            
             this_head = find_quantified(word, api) or find_attributed(word, api) or word
             heads.append(this_head)
             
         # save all others as heads, check for quantifiers first
-        elif word_relas == {'NA'}:
+        elif all([word_relas == {'NA'},
+                  check_preposition(word, phrase, api)
+                 ]):
+            
             this_head = find_quantified(word, api) or find_attributed(word, api) or word
             heads.append(this_head)
             
@@ -193,3 +200,32 @@ def find_attributed(word, api):
         raise Exception(f'adjective head assignment on NP {L.u(word, "phrase")} at word {word}')
     else:
         return None
+    
+def check_preposition(word, phrase, tf_api):
+    
+    '''
+    Objects of prepositions do not have
+    any relational information in the database.
+    Therefore, cases of prepositions which are 
+    immediately preceded by another preposition
+    must be excluded since they are not true heads.
+    
+    --input--
+    word node and phrase nodes
+    
+    --output--
+    boolean on whether head
+    '''
+    
+    F, L = tf_api.F, tf_api.L
+    
+    if F.pdp.v(word) != 'prep':
+        return True
+    
+    # look for preceding preposition
+    ph_boundaries = L.d(phrase, 'word')
+    if F.pdp.v(word-1) == 'prep' and word-1 in ph_boundaries:
+        return False
+    
+    else:
+        return True
