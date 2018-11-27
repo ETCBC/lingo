@@ -68,7 +68,8 @@ def get_heads(phrase, api):
         # check parallel relations for independency
         elif all([word_relas & {'par', 'Para'},
                   mother_is_head(word_phrases, heads, api),
-                  check_preposition(word, phrase, api)
+                  check_preposition(word, phrase, api),
+                  #check_parallel_quants(word, api)
                  ]):
             
             this_head = find_quantified(word, api) or find_attributed(word, api) or word
@@ -118,9 +119,9 @@ def find_quantified(word, api):
     '''        
     Check whether a head candidate is a quantifier (e.g. כל).
     If it is, find the quantified noun if there is one.
-    Quantifiers are connected with the modified noun
-    either by a subphrase relation of "rec" for nomen 
-    regens. In this case, the quantifier word node is the
+    Quantifiers may be connected with the modified noun
+    by a subphrase relation of "rec" for nomen regens. 
+    In this case, the quantifier word node is the
     mother itself. In other cases, the noun is related to the
     number via the "atr" (attributive) subphrase relation. In this
     case, the edge relation is connected from the substantive
@@ -166,6 +167,22 @@ def find_quantified(word, api):
     
     # all else are non-quantifiers
     return None
+
+def check_parallel_quants(word, api):
+    '''
+    *TEMPORARY FIX*
+    Check whether the head candidate is a quantifier in parallel
+    with another quantifier. These are cases such as Gen 5:3:
+        שְׁלֹשִׁ֤ים וּמְאַת֙ שָׁנָ֔ה
+    cases like ^these result in a number being selected as a 
+    head alongside the quantified noun. So, in this case the
+    pulled heads are שלש and שנה whereas it should simply return שנה.
+    
+    This fix makes a simple check to see whether 1. whether the word
+    is a quantifier, and 2. if it is a quantifier, if it is paralleled
+    by another quantifier. The function only checks subphrase relations.
+    '''
+    
 
 def find_attributed(word, api):
     
