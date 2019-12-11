@@ -1,3 +1,5 @@
+[![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/ETCBC/lingo/)](https://archive.softwareheritage.org/browse/origin/https://github.com/ETCBC/lingo/)
+
 # lingo
 Various (linguistic) applications of the BHSA data:
 
