@@ -1,0 +1,22 @@
+,,
+Verse,Issue,Cause
+Gen 39:4,missing יֵשׁ after כֹּל,יֵשׁ is not in the same clause as כֹּל
+Num 5:2,missing two כֹּל’s (the one before צָר֖וּעַ and the one before זָ֑ב),
+Num 5:2,it’s able to find the last כֹ֖ל but not טָמֵא following it,טָמֵא belongs to another clause and is not marked as an objc
+Num 31:7,missing זָכָר after כֹּל,זָכָר is an adjective
+Num 31:17,missing זָכָ֖ר after כֹּל,זָכָר is an adjective
+Num 31:17,missing כֹּל before אִשָּׁה,
+Deut 25:18,missing חשׁל after כֹּל,נֶּחֱשָׁלִ֣ים belongs to another clause and is a verb
+Judg 13:4,missing טָמֵֽא after כֹּל,טָמֵֽא is an adjective
+1 Sam 14:36,missing טוֹב after כֹּל,טוֹב is an adjective
+1 Kgs 11:15,missing זָכָר after כֹּל,זָכָר is an adjective
+1 Kgs 11:16,missing זָכָר after כֹּל,זָכָר is an adjective
+Isa 43:7,missing הַנִּקְרָ֣א after כֹּל,נִּקְרָ֣א belongs to another clause and is a verb
+Ps 73:27,missing זֹונֶ֥ה after כֹּל,זֹונֶ֥ה belongs to another clause and is a verb
+Ps 119:118,missing שֹׁוגִ֣ים after כֹּל,שֹׁוגִ֣ים belongs to another clause and is a verb
+Job 40:11,missing גֵּ֝אֶ֗ה after כֹּל,גֵּ֝אֶ֗ה is an adjective
+Job 40:12,missing גֵּ֝אֶ֗ה after כֹּל,גֵּ֝אֶ֗ה is an adjective
+Prov 6:29,missing נֹּגֵ֥עַ after כֹּל,נֹּגֵ֥עַ belongs to another clause and is a verb
+Prov 20:8,missing רָֽע after כֹּל,רָֽע is an adjective
+2 Chr 13:9,missing בָּ֗א after כֹּל,בָּ֗א belongs to another clause and is a verb
+2 Chr 22:1,missing רִאשֹׁנִים֙ after כֹּל,רִאשֹׁנִים֙ is an ordinal?
