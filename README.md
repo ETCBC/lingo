@@ -1,4 +1,5 @@
 [![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/ETCBC/lingo/)](https://archive.softwareheritage.org/browse/origin/https://github.com/ETCBC/lingo/)
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://www.repostatus.org/badges/latest/unsupported.svg)](https://www.repostatus.org/#unsupported)
 
 # lingo
 Various (linguistic) applications of the BHSA data:
@@ -39,3 +40,8 @@ Then you can zip it and upload to text processing services such as
 
 ## Heads
 Export edge relationships between phrases and their head words. A head word is defined as "the word that determines the syntactic category of that phrase" [(wikipedia)](https://en.wikipedia.org/wiki/Head_(linguistics)).
+
+# Author
+
+[Dirk Roorda](https://github.com/dirkroorda)
+
