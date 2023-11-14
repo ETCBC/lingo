@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # ---
-# jupyter:
-#   jupytext:
+#   jupyt_pdp_safe@-ext:
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -181,7 +180,7 @@ def find_quantified(word):
     either by a subphrase relation of "rec" for nomen
     regens. In this case, the quantifier word node is the
     mother itself. In other cases, the noun is related to the
-    number via the "atr" (attributive) subphrase relation. In this
+    number via the `atr` (attributive) subphrase relation. In this
     case, the edge relation is connected from the substantive
     to the number's subphrase.
 
@@ -384,9 +383,9 @@ type_to_pdp = {
 def test_pdp_safe(phrase_object="phrase_atom"):
 
     """
-    Make a survey of phrase types and their matching pdp words,
+    Make a survey of phrase types and their matching `pdp` words,
     count what kinds of subphrase relations these words
-    occurr in. The survey can then be used to investigate
+    occur in. The survey can then be used to investigate
     whether phrase types besides noun phrases require relationship
     checks for independency.
     """

@@ -123,7 +123,7 @@ def find_quantified(word, api):
     by a subphrase relation of "rec" for nomen regens. 
     In this case, the quantifier word node is the
     mother itself. In other cases, the noun is related to the
-    number via the "atr" (attributive) subphrase relation. In this
+    number via the `atr` (attributive) subphrase relation. In this
     case, the edge relation is connected from the substantive
     to the number's subphrase.
     
